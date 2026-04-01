@@ -1,0 +1,145 @@
+:root {
+    --bg-start: #030711;
+    --bg-end: #0c1226;
+    --panel-bg: rgba(7, 13, 30, 0.7);
+    --panel-border: rgba(120, 235, 255, 0.28);
+    --cyan: #79f7ff;
+    --blue: #58a6ff;
+    --pink: #ff5fd2;
+    --text-dim: #9bb5d1;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: "Orbitron", sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(88, 166, 255, 0.18), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(255, 95, 210, 0.16), transparent 28%),
+        linear-gradient(145deg, var(--bg-start), var(--bg-end));
+    color: white;
+}
+
+.clock-app {
+    position: relative;
+    width: min(92vw, 760px);
+    padding: 32px;
+}
+
+.clock-panel {
+    position: relative;
+    padding: 48px 28px;
+    border: 1px solid var(--panel-border);
+    border-radius: 28px;
+    background: var(--panel-bg);
+    backdrop-filter: blur(18px);
+    text-align: center;
+    box-shadow:
+        0 0 20px rgba(121, 247, 255, 0.12),
+        0 0 60px rgba(88, 166, 255, 0.1),
+        inset 0 0 30px rgba(121, 247, 255, 0.05);
+}
+
+.clock-panel::before {
+    content: "";
+    position: absolute;
+    inset: 12px;
+    border: 1px solid rgba(121, 247, 255, 0.12);
+    border-radius: 20px;
+    pointer-events: none;
+}
+
+.clock-label {
+    margin: 0 0 16px;
+    font-size: 0.82rem;
+    letter-spacing: 0.5rem;
+    color: var(--text-dim);
+}
+
+.clock-time {
+    margin: 0;
+    font-size: clamp(2.6rem, 10vw, 5.8rem);
+    letter-spacing: 0.18em;
+    color: var(--cyan);
+    text-shadow:
+        0 0 8px rgba(121, 247, 255, 0.9),
+        0 0 18px rgba(121, 247, 255, 0.8),
+        0 0 38px rgba(88, 166, 255, 0.7),
+        0 0 72px rgba(88, 166, 255, 0.45);
+    animation: flicker 3.2s infinite;
+}
+
+.clock-date {
+    margin: 18px 0 0;
+    font-size: 0.95rem;
+    letter-spacing: 0.18rem;
+    color: var(--text-dim);
+}
+
+.clock-zone {
+    margin: 12px 0 0;
+    font-size: 0.78rem;
+    letter-spacing: 0.14rem;
+    color: var(--text-dim);
+    opacity: 0.9;
+}
+
+.glow {
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    filter: blur(28px);
+    opacity: 0.55;
+    z-index: -1;
+}
+
+.glow-left {
+    top: -20px;
+    left: -40px;
+    background: rgba(121, 247, 255, 0.24);
+}
+
+.glow-right {
+    right: -30px;
+    bottom: -10px;
+    background: rgba(255, 95, 210, 0.2);
+}
+
+@keyframes flicker {
+    0%, 18%, 22%, 25%, 53%, 57%, 100% {
+        opacity: 1;
+    }
+
+    20%, 24%, 55% {
+        opacity: 0.82;
+    }
+}
+
+@media (max-width: 640px) {
+    .clock-app {
+        padding: 18px;
+    }
+
+    .clock-panel {
+        padding: 36px 18px;
+        border-radius: 22px;
+    }
+
+    .clock-label,
+    .clock-date,
+    .clock-zone {
+        letter-spacing: 0.16rem;
+    }
+
+    .clock-time {
+        letter-spacing: 0.1em;
+    }
+}

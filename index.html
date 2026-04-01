@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Digital Clock</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="clock-app">
+        <div class="glow glow-left"></div>
+        <div class="glow glow-right"></div>
+
+        <section class="clock-panel" aria-label="Current time digital clock">
+            <p class="clock-label">LOCAL TIME</p>
+            <h1 class="clock-time" id="clock" aria-live="polite">00:00:00</h1>
+            <p class="clock-date" id="date">Monday, January 01, 0000</p>
+            <p class="clock-zone" id="eastern-time">US Eastern Time • 00:00:00 AM EDT</p>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
