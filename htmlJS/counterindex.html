@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Counter</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #f7f8fb, #dfe5ef);
+            color: #111827;
+        }
+
+        .counter-card {
+            width: min(92vw, 520px);
+            padding: 32px 24px;
+            border: 2px solid #111827;
+            border-radius: 24px;
+            background: #ffffff;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(17, 24, 39, 0.12);
+        }
+
+        .counter-label {
+            margin: 0 0 18px;
+            font-size: 1rem;
+            letter-spacing: 0.08em;
+        }
+
+        .counter-value {
+            margin: 0;
+            font-size: clamp(5rem, 20vw, 9rem);
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 28px;
+        }
+
+        button {
+            min-width: 92px;
+            padding: 14px 18px;
+            border: 2px solid #111827;
+            border-radius: 14px;
+            background: #111827;
+            color: #ffffff;
+            font-size: 1.6rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #ffffff;
+            color: #111827;
+        }
+    </style>
+</head>
+<body>
+    <main class="counter-card">
+        <p class="counter-label">Simple Click Counter</p>
+        <h1 class="counter-value" id="count">0</h1>
+        <div class="button-row">
+            <button type="button" id="decrease">-</button>
+            <button type="button" id="increase">+</button>
+        </div>
+    </main>
+
+    <script>
+        const countElement = document.getElementById("count");
+        const increaseButton = document.getElementById("increase");
+        const decreaseButton = document.getElementById("decrease");
+
+        let count = 0;
+
+        function renderCount() {
+            countElement.textContent = count;
+        }
+
+        increaseButton.addEventListener("click", () => {
+            count += 1;
+            renderCount();
+        });
+
+        decreaseButton.addEventListener("click", () => {
+            count = Math.max(0, count - 1);
+            renderCount();
+        });
+
+        renderCount();
+    </script>
+</body>
+</html>
