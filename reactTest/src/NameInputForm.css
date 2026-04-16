@@ -1,0 +1,47 @@
+.name-ref-section {
+  border-top: 1px solid var(--border);
+  padding: 24px 20px 56px;
+  text-align: left;
+}
+
+.name-ref-section h2 {
+  margin: 0 0 8px;
+}
+
+.name-ref-help {
+  margin: 0 0 16px;
+}
+
+.name-ref-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.name-ref-controls input {
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.name-ref-controls button {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--social-bg);
+  cursor: pointer;
+}
+
+.name-ref-result {
+  margin: 14px 0 0;
+}
+
+@media (max-width: 760px) {
+  .name-ref-controls {
+    grid-template-columns: 1fr;
+  }
+}

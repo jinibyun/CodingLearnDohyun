@@ -1,19 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import MovieCard from './MovieCard'
 import TestState from './test/testState'
+import TodoList from './todolist'
+import NameInputForm from './NameInputForm'
 import './App.css'
 
-function xyz(){
-  return 1;
+function getCurrentPage() {
+  return window.location.hash === '#todo' ? 'todo' : 'home'
 }
 
 function App() {
 
   // Code
   const [count, setCount] = useState(0)
+  const [page, setPage] = useState(getCurrentPage)
   const movies = [
     {
       title: '아바타',
@@ -36,6 +39,22 @@ function App() {
       url: 'https://upload.wikimedia.org/wikipedia/en/5/53/Parasite_%282019_film%29.png',
     },
   ]
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setPage(getCurrentPage())
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange)
+    }
+  }, [])
+
+  if (page === 'todo') {
+    return <TodoList />
+  }
 
 
   // Design
@@ -165,6 +184,14 @@ function App() {
       <section style={{ padding: '28px 20px 60px' }}>
         <TestState />
       </section>
+
+      <section style={{ padding: '0 20px 56px' }}>
+        <a className="counter" href="#todo" style={{ textDecoration: 'none' }}>
+          Todo List 페이지 보기
+        </a>
+      </section>
+
+      <NameInputForm />
     </>
   )
 }
