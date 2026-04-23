@@ -35,6 +35,9 @@ export default function RootLayout({ children }) {
             <Link href="/about" className="hover:opacity-80">
               About
             </Link>
+            <Link href="/shadcntest" className="hover:opacity-80">
+              Shadcn Test
+            </Link>
           </nav>
         </header>
         <main className="flex-1">{children}</main>
