@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 const profileSchema = z.object({
@@ -58,7 +59,9 @@ export default function ProfilePage() {
     },
   })
 
-  function onSubmit(values) {
+  async function onSubmit(values) {
+    await new Promise((resolve) => setTimeout(resolve, 5000))
+
     toast.success("프로필 저장 성공!", {
       description: `이메일: ${values.email} / 직업: ${values.role}`,
     })
@@ -202,7 +205,16 @@ export default function ProfilePage() {
             )}
           />
 
-          <Button type="submit">저장</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                저장 중...
+              </>
+            ) : (
+              "저장"
+            )}
+          </Button>
         </form>
       </Form>
     </div>
