@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -55,6 +56,7 @@ export default function RootLayout({ children }) {
             </nav>
           </header>
           <main className="flex-1">{children}</main>
+          <Toaster richColors />
         </ThemeProvider>
       </body>
     </html>
