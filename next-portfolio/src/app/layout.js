@@ -42,6 +42,9 @@ export default function RootLayout({ children }) {
                 <Link href="/shadcntest" className="hover:opacity-80">
                   Shadcn Test
                 </Link>
+                <Link href="/profile" className="hover:opacity-80">
+                  Profile
+                </Link>
               </div>
               <div className="flex items-center gap-3">
                 <ThemeToggle />
