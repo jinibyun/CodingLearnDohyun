@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -45,7 +46,22 @@ const profileSchema = z.object({
   theme: z.enum(["light", "dark", "system"]),
 })
 
+async function fetchUserData() {
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+
+  return {
+    username: "jini_developer",
+    email: "jini@example.com",
+    bio: "Toronto based developer",
+    role: "developer",
+    marketing_emails: true,
+    theme: "dark",
+  }
+}
+
 export default function ProfilePage() {
+  const [isLoading, setIsLoading] = useState(true)
+
   const form = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -59,12 +75,61 @@ export default function ProfilePage() {
     },
   })
 
-  async function onSubmit(values) {
-    await new Promise((resolve) => setTimeout(resolve, 5000))
+  useEffect(() => {
+    let isMounted = true
 
-    toast.success("프로필 저장 성공!", {
-      description: `이메일: ${values.email} / 직업: ${values.role}`,
-    })
+    async function loadUserData() {
+      const data = await fetchUserData()
+
+      if (!isMounted) {
+        return
+      }
+
+      form.reset({
+        ...data,
+        password: "",
+      })
+      setIsLoading(false)
+    }
+
+    loadUserData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [form])
+
+  async function onSubmit(values) {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295
+
+      if (randomValue < 0.5) {
+        throw new Error("서버 응답 지연")
+      }
+
+      toast.success("프로필 저장 성공!", {
+        description: `이메일: ${values.email} / 직업: ${values.role}`,
+      })
+    } catch (error) {
+      toast.error("저장 실패", {
+        description: "서버에 문제가 발생했습니다. 다시 시도해주세요.",
+      })
+    } finally {
+      // react-hook-form handles isSubmitting reset when this async function settles.
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-6">
+        <div className="flex items-center text-muted-foreground">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <span>사용자 정보를 불러오는 중...</span>
+        </div>
+      </div>
+    )
   }
 
   return (
