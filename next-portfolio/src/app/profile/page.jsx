@@ -98,20 +98,9 @@ export default function ProfilePage() {
 
   async function onSubmit(values) {
     try {
-      let error
-
-      if (profileId) {
-        // Update existing profile
-        const result = await supabase
-          .from("profiles3")
-          .update(values)
-          .eq("id", profileId)
-        error = result.error
-      } else {
-        // Insert new profile
-        const result = await supabase.from("profiles3").insert([values])
-        error = result.error
-      }
+      const { error } = await supabase
+        .from("profiles3")
+        .upsert([{ ...values, id: profileId }])
 
       if (error) {
         throw error
