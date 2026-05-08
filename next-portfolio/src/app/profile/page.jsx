@@ -48,6 +48,7 @@ const profileSchema = z.object({
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
+  const [profileId, setProfileId] = useState(null)
 
   const form = useForm({
     resolver: zodResolver(profileSchema),
@@ -84,6 +85,7 @@ export default function ProfilePage() {
       }
 
       form.reset(data)
+      setProfileId(data.id)
       setIsLoading(false)
     }
 
@@ -96,17 +98,30 @@ export default function ProfilePage() {
 
   async function onSubmit(values) {
     try {
-      const { error } = await supabase.from("profiles3").insert([values])
+      let error
+
+      if (profileId) {
+        // Update existing profile
+        const result = await supabase
+          .from("profiles3")
+          .update(values)
+          .eq("id", profileId)
+        error = result.error
+      } else {
+        // Insert new profile
+        const result = await supabase.from("profiles3").insert([values])
+        error = result.error
+      }
 
       if (error) {
         throw error
       }
 
-      toast.success("프로필 저장 성공!", {
+      toast.success(profileId ? "프로필 수정 완료!" : "프로필 생성 완료!", {
         description: `이메일: ${values.email} / 직업: ${values.role}`,
       })
     } catch (error) {
-      console.log(error);
+      console.log(error)
       toast.error("저장 실패", {
         description: "서버에 문제가 발생했습니다. 다시 시도해주세요.",
       })
