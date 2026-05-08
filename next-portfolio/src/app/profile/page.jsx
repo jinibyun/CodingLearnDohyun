@@ -96,14 +96,52 @@ export default function ProfilePage() {
     }
   }, [form])
 
-  async function onSubmit(values) {
+  async function handleDelete() {
+    if (!window.confirm("정말 프로필을 삭제하시겠습니까?")) {
+      return
+    }
+
     try {
       const { error } = await supabase
         .from("profiles3")
-        .upsert([{ ...values, id: profileId }])
+        .delete()
+        .eq("id", profileId)
 
       if (error) {
         throw error
+      }
+
+      toast.success("프로필이 삭제되었습니다")
+      form.reset({
+        username: "",
+        email: "",
+        bio: "",
+        role: "",
+        marketing_emails: false,
+        theme: "system",
+      })
+      setProfileId(null)
+    } catch (error) {
+      console.log(error)
+      toast.error("삭제 실패", {
+        description: "서버에 문제가 발생했습니다. 다시 시도해주세요.",
+      })
+    }
+  }
+
+  async function onSubmit(values) {
+    try {
+      const nextProfileId = profileId ?? crypto.randomUUID()
+      const { error } = await supabase
+        .from("profiles3")
+        .upsert([{ ...values, id: nextProfileId }])
+
+      if (error) {
+        throw error
+      }
+
+      if (!profileId) {
+        setProfileId(nextProfileId)
       }
 
       toast.success(profileId ? "프로필 수정 완료!" : "프로필 생성 완료!", {
@@ -262,6 +300,15 @@ export default function ProfilePage() {
               "저장"
             )}
           </Button>
+          {profileId && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+            >
+              프로필 삭제
+            </Button>
+          )}
         </form>
       </Form>
     </div>
