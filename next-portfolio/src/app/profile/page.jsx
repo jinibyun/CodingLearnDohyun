@@ -28,6 +28,7 @@ import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { supabase } from "@/lib/supabase"
 
 const profileSchema = z.object({
   username: z
@@ -35,7 +36,6 @@ const profileSchema = z.object({
     .min(2, "닉네임은 2~20자 사이여야 합니다.")
     .max(20, "닉네임은 2~20자 사이여야 합니다."),
   email: z.email("유효한 이메일 주소를 입력해주세요."),
-  password: z.string().min(8, "비밀번호는 최소 8자 이상이어야 합니다."),
   bio: z.string().max(160, "자기소개는 160자를 초과할 수 없습니다.").optional(),
   role: z
     .string()
@@ -46,19 +46,6 @@ const profileSchema = z.object({
   theme: z.enum(["light", "dark", "system"]),
 })
 
-async function fetchUserData() {
-  await new Promise((resolve) => setTimeout(resolve, 1500))
-
-  return {
-    username: "jini_developer",
-    email: "jini@example.com",
-    bio: "Toronto based developer",
-    role: "developer",
-    marketing_emails: true,
-    theme: "dark",
-  }
-}
-
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
 
@@ -67,7 +54,6 @@ export default function ProfilePage() {
     defaultValues: {
       username: "",
       email: "",
-      password: "",
       bio: "",
       role: "",
       marketing_emails: false,
@@ -79,16 +65,25 @@ export default function ProfilePage() {
     let isMounted = true
 
     async function loadUserData() {
-      const data = await fetchUserData()
+      const { data, error } = await supabase
+        .from("profiles3")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single()
 
       if (!isMounted) {
         return
       }
 
-      form.reset({
-        ...data,
-        password: "",
-      })
+      if (error) {
+        console.log(error)
+        toast.error("데이터를 불러오지 못했습니다")
+        setIsLoading(false)
+        return
+      }
+
+      form.reset(data)
       setIsLoading(false)
     }
 
@@ -101,23 +96,20 @@ export default function ProfilePage() {
 
   async function onSubmit(values) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      const { error } = await supabase.from("profiles3").insert([values])
 
-      const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295
-
-      if (randomValue < 0.5) {
-        throw new Error("서버 응답 지연")
+      if (error) {
+        throw error
       }
 
       toast.success("프로필 저장 성공!", {
         description: `이메일: ${values.email} / 직업: ${values.role}`,
       })
     } catch (error) {
+      console.log(error);
       toast.error("저장 실패", {
         description: "서버에 문제가 발생했습니다. 다시 시도해주세요.",
       })
-    } finally {
-      // react-hook-form handles isSubmitting reset when this async function settles.
     }
   }
 
@@ -159,20 +151,6 @@ export default function ProfilePage() {
                 <FormLabel>이메일</FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="you@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>비밀번호</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="최소 8자 이상" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
