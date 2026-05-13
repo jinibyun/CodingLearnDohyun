@@ -48,6 +48,7 @@ const profileSchema = z.object({
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [profileId, setProfileId] = useState(null)
 
   const form = useForm({
@@ -66,27 +67,37 @@ export default function ProfilePage() {
     let isMounted = true
 
     async function loadUserData() {
-      const { data, error } = await supabase
-        .from("profiles3")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single()
+      try {
+        setError(null)
 
-      if (!isMounted) {
-        return
-      }
+        const res = await fetch("/api/profiles")
+        const json = await res.json()
 
-      if (error) {
+        if (!isMounted) {
+          return
+        }
+
+        if (!res.ok) {
+          throw new Error(json.error || "데이터를 불러오지 못했습니다")
+        }
+
+        if (json.data) {
+          form.reset(json.data)
+          setProfileId(json.data.id)
+        }
+      } catch (error) {
+        if (!isMounted) {
+          return
+        }
+
         console.log(error)
+        setError(error.message || "데이터를 불러오지 못했습니다")
         toast.error("데이터를 불러오지 못했습니다")
-        setIsLoading(false)
-        return
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
-
-      form.reset(data)
-      setProfileId(data.id)
-      setIsLoading(false)
     }
 
     loadUserData()
@@ -169,6 +180,7 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <h1 className="mb-6 text-2xl font-bold">종합 프로필 설정</h1>
+      {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
