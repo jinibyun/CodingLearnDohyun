@@ -1,2 +1,15 @@
 # Get
 GET http://localhost:3000/api/profiles
+
+### Post
+POST http://localhost:3000/api/profiles
+Content-Type: application/json
+
+{
+  "username": "John Doe",
+  "email": "john.doe@example.com",
+  "bio": "자기소개 예시",
+  "role": "developer",
+  "marketing_emails": true,
+  "theme": "light"
+}

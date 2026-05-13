@@ -142,27 +142,30 @@ export default function ProfilePage() {
 
   async function onSubmit(values) {
     try {
-      const nextProfileId = profileId ?? crypto.randomUUID()
-      const { error } = await supabase
-        .from("profiles3")
-        .upsert([{ ...values, id: nextProfileId }])
+      const nextProfileId = profileId ?? crypto.randomUUID();
+      const res = await fetch("/api/profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...values, id: nextProfileId }),
+      });
+      const json = await res.json();
 
-      if (error) {
-        throw error
+      if (!res.ok) {
+        throw new Error(json.error || "저장에 실패했습니다");
       }
 
       if (!profileId) {
-        setProfileId(nextProfileId)
+        setProfileId(nextProfileId);
       }
 
       toast.success(profileId ? "프로필 수정 완료!" : "프로필 생성 완료!", {
         description: `이메일: ${values.email} / 직업: ${values.role}`,
-      })
+      });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast.error("저장 실패", {
         description: "서버에 문제가 발생했습니다. 다시 시도해주세요.",
-      })
+      });
     }
   }
 
