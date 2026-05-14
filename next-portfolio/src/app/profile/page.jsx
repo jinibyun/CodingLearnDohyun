@@ -28,7 +28,6 @@ import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { supabase } from "@/lib/supabase"
 
 const profileSchema = z.object({
   username: z
@@ -113,13 +112,15 @@ export default function ProfilePage() {
     }
 
     try {
-      const { error } = await supabase
-        .from("profiles3")
-        .delete()
-        .eq("id", profileId)
+      const res = await fetch("/api/profiles", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: profileId }),
+      })
+      const json = await res.json()
 
-      if (error) {
-        throw error
+      if (!res.ok) {
+        throw new Error(json.error || "삭제에 실패했습니다")
       }
 
       toast.success("프로필이 삭제되었습니다")
