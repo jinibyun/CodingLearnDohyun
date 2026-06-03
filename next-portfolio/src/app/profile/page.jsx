@@ -28,6 +28,7 @@ import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { supabase } from "@/lib/supabase"
 
 const profileSchema = z.object({
   username: z
@@ -46,6 +47,7 @@ const profileSchema = z.object({
 })
 
 export default function ProfilePage() {
+  const [authUser, setAuthUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [profileId, setProfileId] = useState(null)
@@ -65,6 +67,24 @@ export default function ProfilePage() {
   useEffect(() => {
     let isMounted = true
 
+    async function loadAuthUser() {
+      const { data, error } = await supabase.auth.getUser()
+      if (!isMounted || error) {
+        return
+      }
+      setAuthUser(data.user ?? null)
+    }
+
+    loadAuthUser()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
     async function loadUserData() {
       try {
         setError(null)
@@ -75,7 +95,9 @@ export default function ProfilePage() {
         if (!isMounted) {
           return
         }
-
+        console.log("----------------");
+        console.log(res);
+        console.log("----------------");
         if (!res.ok) {
           throw new Error(json.error || "데이터를 불러오지 못했습니다")
         }
@@ -83,6 +105,15 @@ export default function ProfilePage() {
         if (json.data) {
           form.reset(json.data)
           setProfileId(json.data.id)
+        } else {
+          form.reset({
+            username: "",
+            email: authUser?.email ?? "",
+            bio: "",
+            role: "",
+            marketing_emails: false,
+            theme: "system",
+          })
         }
       } catch (error) {
         if (!isMounted) {
@@ -104,7 +135,7 @@ export default function ProfilePage() {
     return () => {
       isMounted = false
     }
-  }, [form])
+  }, [form, authUser])
 
   async function handleDelete() {
     if (!window.confirm("정말 프로필을 삭제하시겠습니까?")) {
@@ -208,7 +239,7 @@ export default function ProfilePage() {
               <FormItem>
                 <FormLabel>이메일</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="you@example.com" {...field} />
+                  <Input type="email" placeholder="you@example.com" {...field} readOnly />
                 </FormControl>
                 <FormMessage />
               </FormItem>
