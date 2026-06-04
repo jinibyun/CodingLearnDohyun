@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -47,6 +48,7 @@ const profileSchema = z.object({
 })
 
 export default function ProfilePage() {
+  const router = useRouter()
   const [authUser, setAuthUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -69,18 +71,43 @@ export default function ProfilePage() {
 
     async function loadAuthUser() {
       const { data, error } = await supabase.auth.getUser()
-      if (!isMounted || error) {
+      if (!isMounted) {
         return
       }
+
+      if (error || !data.user) {
+        setAuthUser(null)
+        setIsLoading(false)
+        router.replace("/login")
+        return
+      }
+
       setAuthUser(data.user ?? null)
     }
 
     loadAuthUser()
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) {
+        return
+      }
+
+      if (!session?.user) {
+        setAuthUser(null)
+        router.replace("/login")
+        return
+      }
+
+      setAuthUser(session.user)
+    })
+
     return () => {
       isMounted = false
+      subscription.unsubscribe()
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     let isMounted = true
@@ -95,9 +122,12 @@ export default function ProfilePage() {
         if (!isMounted) {
           return
         }
-        console.log("----------------");
-        console.log(res);
-        console.log("----------------");
+
+        if (res.status === 401) {
+          router.replace("/login")
+          return
+        }
+
         if (!res.ok) {
           throw new Error(json.error || "데이터를 불러오지 못했습니다")
         }
@@ -135,7 +165,7 @@ export default function ProfilePage() {
     return () => {
       isMounted = false
     }
-  }, [form, authUser])
+  }, [form, authUser, router])
 
   async function handleDelete() {
     if (!window.confirm("정말 프로필을 삭제하시겠습니까?")) {

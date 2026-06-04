@@ -39,7 +39,8 @@ export default function LoginPage() {
 			setError(error.message);
 		} else {
 			setMessage("로그인 성공!");
-			router.push("/profile");
+			router.replace("/profile");
+			router.refresh();
 		}
 
 		setLoading(false);
