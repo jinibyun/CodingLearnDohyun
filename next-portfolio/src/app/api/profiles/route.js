@@ -1,6 +1,25 @@
 import { NextResponse } from "next/server"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 
+function extractAvatarPath(avatarUrl) {
+	if (!avatarUrl) {
+		return null
+	}
+
+	if (!avatarUrl.startsWith("http")) {
+		return avatarUrl
+	}
+
+	const marker = "/storage/v1/object/public/avatars/"
+	const markerIndex = avatarUrl.indexOf(marker)
+	if (markerIndex === -1) {
+		return null
+	}
+
+	const rawPath = avatarUrl.slice(markerIndex + marker.length).split("?")[0]
+	return decodeURIComponent(rawPath)
+}
+
 export async function GET(request) {
 	const supabase = await createSupabaseServerClient()
 	const {
@@ -41,8 +60,26 @@ export async function POST(request) {
 		}
 
 		const body = await request.json()
+		const {
+			id,
+			name,
+			username,
+			bio,
+			role,
+			marketing_emails,
+			theme,
+			avatar_url,
+		} = body
+
 		const payload = {
-			...body,
+			id,
+			name,
+			username,
+			bio,
+			role,
+			marketing_emails,
+			theme,
+			avatar_url,
 			email: user.email,
 		}
 
@@ -73,14 +110,32 @@ export async function DELETE(request) {
 			return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 })
 		}
 
-		const { id } = await request.json();
-		if (!id) {
-			return NextResponse.json({ error: "id 값이 필요합니다." }, { status: 400 });
+		const { data: existingProfile, error: findError } = await supabase
+			.from("profiles3")
+			.select("id, avatar_url")
+			.eq("email", user.email)
+			.maybeSingle()
+
+		if (findError) {
+			return NextResponse.json({ error: findError.message }, { status: 500 })
 		}
+
+		if (!existingProfile) {
+			return NextResponse.json({ success: true }, { status: 200 })
+		}
+
+		const avatarPath = extractAvatarPath(existingProfile.avatar_url)
+		if (avatarPath) {
+			const { error: removeError } = await supabase.storage.from("avatars").remove([avatarPath])
+			if (removeError) {
+				return NextResponse.json({ error: removeError.message }, { status: 500 })
+			}
+		}
+
 		const { error } = await supabase
 			.from("profiles3")
 			.delete()
-			.eq("id", id)
+			.eq("id", existingProfile.id)
 			.eq("email", user.email);
 		if (error) {
 			return NextResponse.json({ error: error.message }, { status: 500 });

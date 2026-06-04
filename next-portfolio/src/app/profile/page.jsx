@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import AvatarUpload from "@/components/AvatarUpload"
 
 import {
   Form,
@@ -45,6 +46,7 @@ const profileSchema = z.object({
     }),
   marketing_emails: z.boolean(),
   theme: z.enum(["light", "dark", "system"]),
+  avatar_url: z.string().optional(),
 })
 
 export default function ProfilePage() {
@@ -53,6 +55,8 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [profileId, setProfileId] = useState(null)
+  const persistedAvatarPathRef = useRef(null)
+  const pendingAvatarPathRef = useRef(null)
 
   const form = useForm({
     resolver: zodResolver(profileSchema),
@@ -63,8 +67,49 @@ export default function ProfilePage() {
       role: "",
       marketing_emails: false,
       theme: "system",
+      avatar_url: "",
     },
   })
+
+  const extractAvatarPath = useCallback((avatarUrl) => {
+    if (!avatarUrl) {
+      return null
+    }
+
+    if (!avatarUrl.startsWith("http")) {
+      return avatarUrl
+    }
+
+    const marker = "/storage/v1/object/public/avatars/"
+    const markerIndex = avatarUrl.indexOf(marker)
+    if (markerIndex === -1) {
+      return null
+    }
+
+    const rawPath = avatarUrl.slice(markerIndex + marker.length).split("?")[0]
+    return decodeURIComponent(rawPath)
+  }, [])
+
+  const removeAvatarByPath = useCallback(async (path) => {
+    if (!path) {
+      return
+    }
+
+    const { error: removeError } = await supabase.storage.from("avatars").remove([path])
+    if (removeError) {
+      console.log(removeError)
+    }
+  }, [])
+
+  const cleanupPendingAvatar = useCallback(async () => {
+    if (!pendingAvatarPathRef.current) {
+      return
+    }
+
+    const pathToDelete = pendingAvatarPathRef.current
+    pendingAvatarPathRef.current = null
+    await removeAvatarByPath(pathToDelete)
+  }, [removeAvatarByPath])
 
   useEffect(() => {
     let isMounted = true
@@ -135,6 +180,8 @@ export default function ProfilePage() {
         if (json.data) {
           form.reset(json.data)
           setProfileId(json.data.id)
+          persistedAvatarPathRef.current = extractAvatarPath(json.data.avatar_url)
+          pendingAvatarPathRef.current = null
         } else {
           form.reset({
             username: "",
@@ -143,7 +190,10 @@ export default function ProfilePage() {
             role: "",
             marketing_emails: false,
             theme: "system",
+            avatar_url: "",
           })
+          persistedAvatarPathRef.current = null
+          pendingAvatarPathRef.current = null
         }
       } catch (error) {
         if (!isMounted) {
@@ -166,6 +216,19 @@ export default function ProfilePage() {
       isMounted = false
     }
   }, [form, authUser, router])
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      void cleanupPendingAvatar()
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+      void cleanupPendingAvatar()
+    }
+  }, [cleanupPendingAvatar])
 
   async function handleDelete() {
     if (!window.confirm("정말 프로필을 삭제하시겠습니까?")) {
@@ -192,8 +255,11 @@ export default function ProfilePage() {
         role: "",
         marketing_emails: false,
         theme: "system",
+        avatar_url: "",
       })
       setProfileId(null)
+      persistedAvatarPathRef.current = null
+      pendingAvatarPathRef.current = null
     } catch (error) {
       console.log(error)
       toast.error("삭제 실패", {
@@ -205,6 +271,7 @@ export default function ProfilePage() {
   async function onSubmit(values) {
     try {
       const nextProfileId = profileId ?? crypto.randomUUID();
+      const previousPersistedPath = persistedAvatarPathRef.current
       const res = await fetch("/api/profiles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -218,6 +285,16 @@ export default function ProfilePage() {
 
       if (!profileId) {
         setProfileId(nextProfileId);
+      }
+
+      const savedPath = extractAvatarPath(values.avatar_url)
+      if (pendingAvatarPathRef.current && pendingAvatarPathRef.current === savedPath) {
+        pendingAvatarPathRef.current = null
+      }
+      persistedAvatarPathRef.current = savedPath
+
+      if (previousPersistedPath && savedPath && previousPersistedPath !== savedPath) {
+        void removeAvatarByPath(previousPersistedPath)
       }
 
       toast.success(profileId ? "프로필 수정 완료!" : "프로필 생성 완료!", {
@@ -248,6 +325,23 @@ export default function ProfilePage() {
       {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <div className="flex items-center justify-center">
+            <AvatarUpload
+              url={form.watch("avatar_url")}
+              size={112}
+              onUpload={async (url) => {
+                const newPath = extractAvatarPath(url)
+
+                if (pendingAvatarPathRef.current && pendingAvatarPathRef.current !== newPath) {
+                  await removeAvatarByPath(pendingAvatarPathRef.current)
+                }
+
+                pendingAvatarPathRef.current = newPath
+                form.setValue("avatar_url", url, { shouldDirty: true, shouldTouch: true })
+              }}
+            />
+          </div>
+
           <FormField
             control={form.control}
             name="username"
